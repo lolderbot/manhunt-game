@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>MANHUNT MULTIPLAYER TACTICAL COMMAND</title>
+
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800;900&family=Rajdhani:wght@500;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg-dark: #070a0e;
+            --panel-bg: rgba(13, 19, 28, 0.94);
+            --neon-green: #00ff66;
+            --neon-red: #ff0055;
+            --neon-blue: #00e1ff;
+            --neon-yellow: #ffcc00;
+            --text: #e0e6ed;
+            --border: rgba(0, 255, 102, 0.35);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Rajdhani', sans-serif;
+            user-select: none;
+        }
+
+        body, html {
+            width: 100%;
+            height: 100%;
+            background-color: var(--bg-dark);
+            color: var(--text);
+            overflow: hidden;
+        }
+
+        h1, h2, h3, .brand-font {
+            font-family: 'Orbitron', sans-serif;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        #app-container {
+            display: flex;
+            flex-direction: column;
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+        }
+
+        .screen {
+            position: absolute;
+            inset: 0;
+            z-index: 100;
+            background: rgba(7, 10, 14, 0.96);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            backdrop-filter: blur(10px);
+            overflow-y: auto;
+        }
+
+        .screen.hidden {
+            display: none !important;
+        }
+
+        .cyber-card {
+            background: var(--panel-bg);
+            border: 1px solid var(--border);
+            box-shadow: 0 0 25px rgba(0, 255, 102, 0.2);
+            border-radius: 12px;
+            padding: 24px;
+            width: 100%;
+            max-width: 480px;
+            text-align: center;
+        }
+
+        .cyber-card h1 {
+            color: var(--neon-green);
+            font-size: 1.8rem;
+            margin-bottom: 6px;
+            text-shadow: 0 0 10px rgba(0,255,102,0.5);
+        }
+
+        .cyber-card p {
+            color: #8a9ba8;
+            font-size: 0.95rem;
+            margin-bottom: 20px;
+        }
+
+        .input-group {
+            margin-bottom: 16px;
+            text-align: left;
+        }
+
+        .input-group label {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--neon-green);
+            margin-bottom: 6px;
+            font-weight: bold;
+        }
+
+        input[type="text"], select {
+            width: 100%;
+            padding: 12px;
+            background: rgba(0, 0, 0, 0.7);
+            border: 1px solid var(--border);
+            color: #fff;
+            border-radius: 6px;
+            font-size: 1.1rem;
+            outline: none;
+        }
+
+        input[type="text"]:focus, select:focus {
+            border-color: var(--neon-green);
+            box-shadow: 0 0 12px rgba(0, 255, 102, 0.4);
+        }
+
+        .btn-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-top: 10px;
+        }
+
+        .btn {
+            background: transparent;
+            border: 1px solid var(--neon-green);
+            color: var(--neon-green);
+            padding: 14px;
+            font-size: 1rem;
+            font-weight: bold;
+            font-family: 'Orbitron', sans-serif;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn:active {
+            transform: scale(0.97);
+        }
+
+        .btn-primary {
+            background: var(--neon-green);
+            color: #000;
+        }
+
+        .btn-demo {
+            background: var(--neon-blue);
+            color: #000;
+            border-color: var(--neon-blue);
+            width: 100%;
+            margin-top: 12px;
+        }
+
+        .btn-danger {
+            border-color: var(--neon-red);
+            color: var(--neon-red);
+        }
+
+        /* Map Interface */
+        #map-wrapper {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            z-index: 1;
+        }
+
+        #map {
+            width: 100%;
+            height: 100%;
+            background: #000;
+        }
+
+        .top-bar {
+            position: absolute;
+            top: 12px;
+            left: 12px;
+            right: 12px;
+            z-index: 50;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+            pointer-events: none;
+        }
+
+        .top-bar > * {
+            pointer-events: auto;
+        }
+
+        .stat-badge {
+            background: var(--panel-bg);
+            border: 1px solid var(--border);
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            backdrop-filter: blur(8px);
+        }
+
+        .stat-value {
+            font-family: 'Orbitron', sans-serif;
+            font-weight: bold;
+            color: var(--neon-green);
+        }
+
+        .layer-btn {
+            background: var(--panel-bg);
+            border: 1px solid var(--border);
+            color: #fff;
+            padding: 8px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .bottom-panel {
+            position: absolute;
+            bottom: 15px;
+            left: 12px;
+            right: 12px;
+            z-index: 50;
+            background: var(--panel-bg);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 12px;
+            backdrop-filter: blur(10px);
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .action-row {
+            display: flex;
+            gap: 10px;
+        }
+
+        .action-row .btn {
+            flex: 1;
+        }
+
+        #loader {
+            position: fixed;
+            inset: 0;
+            background: #070a0e;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: var(--neon-green);
+        }
+
+        .spinner {
+            width: 45px;
+            height: 45px;
+            border: 4px solid rgba(0,255,102,0.2);
+            border-top-color: var(--neon-green);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 16px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="loader">
+        <div class="spinner"></div>
+        <h2 class="brand-font">MANHUNT RADAR LÄDT...</h2>
+    </div>
+
+    <div id="app-container">
+
+        <!-- LOBBY SCREEN -->
+        <div id="screen-lobby" class="screen">
+            <div class="cyber-card">
+                <h1>MANHUNT TACTICAL</h1>
+                <p>Echtzeit Real-Life Tracking Dashboard</p>
+
+                <div class="input-group">
+                    <label>DEIN CODENAME</label>
+                    <input type="text" id="input-username" placeholder="z.B. Hunter_01" value="Agent_X" maxlength="12">
+                </div>
+
+                <div class="input-group">
+                    <label>DEINE ROLLE</label>
+                    <select id="select-role">
+                        <option value="hunter">🔴 JÄGER (HUNTER)</option>
+                        <option value="prey">🟢 GEJAGTER (PREY)</option>
+                    </select>
+                </div>
+
+                <div class="input-group">
+                    <label>LOBBY CODE</label>
+                    <input type="text" id="input-roomcode" placeholder="z.B. ALPHA1" value="ALPHA1" maxlength="6" style="text-transform: uppercase;">
+                </div>
+
+                <div class="btn-grid">
+                    <button class="btn btn-primary" onclick="startLobby('host')">RAUM ERSTELLEN</button>
+                    <button class="btn" onclick="startLobby('join')">BEITRETEN</button>
+                </div>
+
+                <button class="btn btn-demo" onclick="startDemoMode()">🎮 DEMO-MODUS (SOLO TEST)</button>
+            </div>
+        </div>
+
+        <!-- MAIN MAP VIEW -->
+        <div id="map-wrapper">
+            <div class="top-bar">
+                <div class="stat-badge">
+                    <span>ROLLE:</span>
+                    <span id="display-role" class="stat-value">JÄGER</span>
+                </div>
+                <div class="stat-badge">
+                    <span>GPS:</span>
+                    <span id="display-gps" class="stat-value">SUCHE...</span>
+                </div>
+                <button class="layer-btn" id="layer-toggle-btn" onclick="toggleMapLayer()">🗺 SATELLIT</button>
+            </div>
+
+            <div id="map"></div>
+
+            <div class="bottom-panel">
+                <div class="action-row">
+                    <button class="btn btn-primary" onclick="triggerManualPing()">📡 LIVE-PING SENDEN</button>
+                    <button class="btn btn-danger" onclick="leaveLobby()">❌ LOBBY</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <script>
+        let map = null;
+        let userMarker = null;
+        let demoHunterMarker = null;
+        let demoZoneCircle = null;
+        let currentRole = 'hunter';
+        let userPosition = [52.5200, 13.4050]; // Default Berlin
+        let currentLayerType = 'sat';
+        let tileLayers = {};
+
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                const loader = document.getElementById('loader');
+                if (loader) loader.style.display = 'none';
+                initMap();
+                initGPS();
+            }, 600);
+        });
+
+        function initMap() {
+            try {
+                map = L.map('map', {
+                    zoomControl: false,
+                    attributionControl: false
+                }).setView(userPosition, 15);
+
+                tileLayers.sat = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19 });
+                tileLayers.street = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 });
+
+                tileLayers.sat.addTo(map);
+            } catch (err) {
+                console.error("Map Error: ", err);
+            }
+        }
+
+        function toggleMapLayer() {
+            if (!map) return;
+            const btn = document.getElementById('layer-toggle-btn');
+            if (currentLayerType === 'sat') {
+                map.removeLayer(tileLayers.sat);
+                tileLayers.street.addTo(map);
+                currentLayerType = 'street';
+                if (btn) btn.innerText = "🗺 STRASSE";
+            } else {
+                map.removeLayer(tileLayers.street);
+                tileLayers.sat.addTo(map);
+                currentLayerType = 'sat';
+                if (btn) btn.innerText = "🗺 SATELLIT";
+            }
+        }
+
+        function initGPS() {
+            if ("geolocation" in navigator) {
+                navigator.geolocation.watchPosition(
+                    (pos) => {
+                        const lat = pos.coords.latitude;
+                        const lng = pos.coords.longitude;
+                        userPosition = [lat, lng];
+
+                        const gpsDisp = document.getElementById('display-gps');
+                        if (gpsDisp) {
+                            gpsDisp.innerText = `±${Math.round(pos.coords.accuracy)}m`;
+                            gpsDisp.style.color = "#00ff66";
+                        }
+
+                        if (map) {
+                            if (!userMarker) {
+                                userMarker = L.circleMarker([lat, lng], {
+                                    radius: 10,
+                                    fillColor: currentRole === 'prey' ? '#00ff66' : '#ff0055',
+                                    color: '#ffffff',
+                                    weight: 3,
+                                    fillOpacity: 0.9
+                                }).addTo(map);
+                                map.setView([lat, lng], 16);
+                            } else {
+                                userMarker.setLatLng([lat, lng]);
+                            }
+                        }
+                    },
+                    (err) => {
+                        const gpsDisp = document.getElementById('display-gps');
+                        if (gpsDisp) {
+                            gpsDisp.innerText = "DEMO-GPS";
+                            gpsDisp.style.color = "#ffcc00";
+                        }
+                    },
+                    { enableHighAccuracy: true, timeout: 10000 }
+                );
+            }
+        }
+
+        function startLobby(mode) {
+            const name = document.getElementById('input-username').value.trim();
+            const role = document.getElementById('select-role').value;
+
+            if (!name) return alert("Gib einen Namen ein!");
+
+            currentRole = role;
+            const roleDisp = document.getElementById('display-role');
+            if (roleDisp) {
+                roleDisp.innerText = role === 'prey' ? 'GEJAGTER' : 'JÄGER';
+                roleDisp.style.color = role === 'prey' ? '#00ff66' : '#ff0055';
+            }
+
+            document.getElementById('screen-lobby').classList.add('hidden');
+            setTimeout(() => { if (map) map.invalidateSize(); }, 300);
+        }
+
+        function startDemoMode() {
+            startLobby('demo');
+
+            if (map && userPosition) {
+                const demoLat = userPosition[0] + 0.0015;
+                const demoLng = userPosition[1] + 0.0015;
+
+                if (!demoHunterMarker) {
+                    demoHunterMarker = L.marker([demoLat, demoLng], { title: "Demo Jäger Bot" }).addTo(map);
+                }
+
+                if (!demoZoneCircle) {
+                    demoZoneCircle = L.circle(userPosition, {
+                        color: '#ff0055',
+                        fillColor: '#ff0055',
+                        fillOpacity: 0.15,
+                        radius: 350
+                    }).addTo(map);
+                }
+            }
+        }
+
+        function leaveLobby() {
+            document.getElementById('screen-lobby').classList.remove('hidden');
+        }
+
+        function triggerManualPing() {
+            if (map && userPosition) {
+                L.circle(userPosition, {
+                    color: '#00e1ff',
+                    fillColor: '#00e1ff',
+                    fillOpacity: 0.5,
+                    radius: 50
+                }).addTo(map);
+                alert(`📡 PING GESENDET!\nPosition: ${userPosition[0].toFixed(4)}, ${userPosition[1].toFixed(4)}`);
+            }
+        }
+    </script>
+</body>
+</html>
