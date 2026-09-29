@@ -2,23 +2,25 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>MANHUNT MULTIPLAYER TACTICAL COMMAND</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>MANHUNT TACTICAL MULTIPLAYER</title>
 
-    <!-- Leaflet CSS -->
+    <!-- Leaflet CSS & Fonts -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800;900&family=Rajdhani:wght@500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Rajdhani:wght@600;700&display=swap" rel="stylesheet">
 
     <style>
         :root {
             --bg-dark: #070a0e;
-            --panel-bg: rgba(13, 19, 28, 0.94);
+            --panel-bg: rgba(11, 16, 25, 0.94);
             --neon-green: #00ff66;
             --neon-red: #ff0055;
             --neon-blue: #00e1ff;
             --neon-yellow: #ffcc00;
-            --text: #e0e6ed;
-            --border: rgba(0, 255, 102, 0.35);
+            --text-main: #f0f4f8;
+            --border-glow: rgba(0, 255, 102, 0.35);
+            --safe-bottom: env(safe-area-inset-bottom, 15px);
+            --safe-top: env(safe-area-inset-top, 15px);
         }
 
         * {
@@ -27,14 +29,16 @@
             padding: 0;
             font-family: 'Rajdhani', sans-serif;
             user-select: none;
+            -webkit-tap-highlight-color: transparent;
         }
 
         body, html {
             width: 100%;
             height: 100%;
             background-color: var(--bg-dark);
-            color: var(--text);
+            color: var(--text-main);
             overflow: hidden;
+            position: fixed;
         }
 
         h1, h2, h3, .brand-font {
@@ -44,24 +48,24 @@
         }
 
         #app-container {
+            width: 100%;
+            height: 100%;
+            position: relative;
             display: flex;
             flex-direction: column;
-            width: 100vw;
-            height: 100vh;
-            position: relative;
         }
 
         .screen {
             position: absolute;
             inset: 0;
-            z-index: 100;
+            z-index: 10000;
             background: rgba(7, 10, 14, 0.96);
+            backdrop-filter: blur(12px);
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
-            padding: 20px;
-            backdrop-filter: blur(10px);
+            justify-content: flex-start;
+            padding: calc(15px + var(--safe-top)) 15px calc(20px + var(--safe-bottom));
             overflow-y: auto;
         }
 
@@ -71,100 +75,166 @@
 
         .cyber-card {
             background: var(--panel-bg);
-            border: 1px solid var(--border);
-            box-shadow: 0 0 25px rgba(0, 255, 102, 0.2);
-            border-radius: 12px;
-            padding: 24px;
+            border: 1px solid var(--border-glow);
+            box-shadow: 0 0 30px rgba(0, 255, 102, 0.15);
+            border-radius: 14px;
+            padding: 20px;
             width: 100%;
-            max-width: 480px;
-            text-align: center;
+            max-width: 500px;
+            margin-top: auto;
+            margin-bottom: auto;
         }
 
         .cyber-card h1 {
             color: var(--neon-green);
-            font-size: 1.8rem;
-            margin-bottom: 6px;
-            text-shadow: 0 0 10px rgba(0,255,102,0.5);
+            font-size: 1.5rem;
+            text-shadow: 0 0 10px rgba(0, 255, 102, 0.4);
+            text-align: center;
+            margin-bottom: 4px;
         }
 
-        .cyber-card p {
-            color: #8a9ba8;
-            font-size: 0.95rem;
-            margin-bottom: 20px;
+        .subtitle {
+            text-align: center;
+            color: #8899a6;
+            font-size: 0.85rem;
+            margin-bottom: 16px;
         }
 
         .input-group {
-            margin-bottom: 16px;
-            text-align: left;
+            margin-bottom: 12px;
         }
 
         .input-group label {
             display: block;
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             color: var(--neon-green);
-            margin-bottom: 6px;
-            font-weight: bold;
+            font-weight: 700;
+            margin-bottom: 4px;
+            letter-spacing: 0.5px;
         }
 
         input[type="text"], select {
             width: 100%;
-            padding: 12px;
-            background: rgba(0, 0, 0, 0.7);
-            border: 1px solid var(--border);
+            padding: 10px 12px;
+            background: rgba(0, 0, 0, 0.6);
+            border: 1px solid rgba(0, 255, 102, 0.3);
             color: #fff;
-            border-radius: 6px;
-            font-size: 1.1rem;
+            border-radius: 8px;
+            font-size: 1rem;
             outline: none;
         }
 
         input[type="text"]:focus, select:focus {
             border-color: var(--neon-green);
-            box-shadow: 0 0 12px rgba(0, 255, 102, 0.4);
+            box-shadow: 0 0 10px rgba(0,255,102,0.3);
         }
 
-        .btn-grid {
+        .row-2 {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 12px;
-            margin-top: 10px;
+            gap: 10px;
         }
 
         .btn {
             background: transparent;
             border: 1px solid var(--neon-green);
             color: var(--neon-green);
-            padding: 14px;
-            font-size: 1rem;
-            font-weight: bold;
+            padding: 12px;
+            font-size: 0.95rem;
+            font-weight: 700;
             font-family: 'Orbitron', sans-serif;
-            border-radius: 6px;
+            border-radius: 8px;
             cursor: pointer;
-            transition: all 0.2s;
+            text-align: center;
+            transition: all 0.15s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            user-select: none;
         }
 
         .btn:active {
             transform: scale(0.97);
+            background: rgba(0, 255, 102, 0.2);
         }
 
         .btn-primary {
             background: var(--neon-green);
             color: #000;
+            border: none;
+            box-shadow: 0 0 15px rgba(0,255,102,0.4);
         }
 
-        .btn-demo {
+        .btn-blue {
             background: var(--neon-blue);
             color: #000;
-            border-color: var(--neon-blue);
-            width: 100%;
-            margin-top: 12px;
+            border: none;
+            box-shadow: 0 0 15px rgba(0,225,255,0.4);
         }
 
         .btn-danger {
             border-color: var(--neon-red);
             color: var(--neon-red);
+            background: rgba(255, 0, 85, 0.1);
         }
 
-        /* Map Interface */
+        .lobby-list-title {
+            font-size: 0.85rem;
+            color: var(--neon-blue);
+            margin: 14px 0 8px 0;
+            font-weight: 700;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .lobby-container {
+            max-height: 200px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 14px;
+            padding-right: 2px;
+        }
+
+        .lobby-item {
+            background: rgba(20, 28, 40, 0.8);
+            border: 1px solid rgba(0, 225, 255, 0.25);
+            border-radius: 8px;
+            padding: 10px 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .lobby-info {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .lobby-name {
+            font-weight: bold;
+            font-size: 0.95rem;
+            color: #fff;
+        }
+
+        .lobby-location {
+            font-size: 0.78rem;
+            color: var(--neon-yellow);
+        }
+
+        .lobby-badge {
+            font-size: 0.7rem;
+            background: rgba(0, 225, 255, 0.15);
+            color: var(--neon-blue);
+            padding: 2px 6px;
+            border-radius: 4px;
+            width: fit-content;
+        }
+
         #map-wrapper {
             width: 100%;
             height: 100%;
@@ -175,124 +245,134 @@
         #map {
             width: 100%;
             height: 100%;
+            z-index: 1;
             background: #000;
         }
 
-        .top-bar {
+        .hud-top-bar {
             position: absolute;
-            top: 12px;
-            left: 12px;
-            right: 12px;
-            z-index: 50;
+            top: calc(10px + var(--safe-top));
+            left: 10px;
+            right: 10px;
+            z-index: 500;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            gap: 8px;
+            gap: 6px;
             pointer-events: none;
         }
 
-        .top-bar > * {
+        .hud-element {
             pointer-events: auto;
-        }
-
-        .stat-badge {
             background: var(--panel-bg);
-            border: 1px solid var(--border);
-            padding: 8px 12px;
+            border: 1px solid var(--border-glow);
+            padding: 6px 10px;
             border-radius: 8px;
-            font-size: 0.85rem;
-            display: flex;
-            align-items: center;
-            gap: 6px;
+            font-size: 0.75rem;
             backdrop-filter: blur(8px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
         }
 
-        .stat-value {
+        .hud-val {
             font-family: 'Orbitron', sans-serif;
-            font-weight: bold;
+            font-weight: 700;
             color: var(--neon-green);
         }
 
-        .layer-btn {
-            background: var(--panel-bg);
-            border: 1px solid var(--border);
-            color: #fff;
-            padding: 8px 12px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: bold;
-        }
-
-        .bottom-panel {
+        .hud-right-controls {
             position: absolute;
-            bottom: 15px;
-            left: 12px;
-            right: 12px;
-            z-index: 50;
-            background: var(--panel-bg);
-            border: 1px solid var(--border);
-            border-radius: 10px;
-            padding: 12px;
-            backdrop-filter: blur(10px);
+            right: 10px;
+            top: calc(65px + var(--safe-top));
+            z-index: 500;
             display: flex;
             flex-direction: column;
             gap: 8px;
         }
 
-        .action-row {
+        .hud-btn-square {
+            width: 44px;
+            height: 44px;
+            background: var(--panel-bg);
+            border: 1px solid var(--border-glow);
+            color: #fff;
+            border-radius: 10px;
             display: flex;
-            gap: 10px;
-        }
-
-        .action-row .btn {
-            flex: 1;
-        }
-
-        #loader {
-            position: fixed;
-            inset: 0;
-            background: #070a0e;
-            z-index: 9999;
-            display: flex;
-            flex-direction: column;
             align-items: center;
             justify-content: center;
-            color: var(--neon-green);
+            font-size: 1.2rem;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+            backdrop-filter: blur(8px);
         }
 
-        .spinner {
-            width: 45px;
-            height: 45px;
-            border: 4px solid rgba(0,255,102,0.2);
-            border-top-color: var(--neon-green);
+        .hud-bottom-panel {
+            position: absolute;
+            bottom: calc(12px + var(--safe-bottom));
+            left: 10px;
+            right: 10px;
+            z-index: 500;
+            background: var(--panel-bg);
+            border: 1px solid var(--border-glow);
+            border-radius: 14px;
+            padding: 10px 12px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.6);
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .hud-actions-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 8px;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 20000;
+            background: rgba(0,0,0,0.85);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 15px;
+        }
+
+        .modal-overlay.hidden {
+            display: none !important;
+        }
+
+        /* Pulsierendes Ping-Icon */
+        @keyframes ping-pulse {
+            0% { transform: scale(0.8); opacity: 1; }
+            100% { transform: scale(2.5); opacity: 0; }
+        }
+
+        .ping-effect {
+            width: 40px;
+            height: 40px;
             border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin-bottom: 16px;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
+            background: rgba(0, 225, 255, 0.4);
+            border: 2px solid var(--neon-blue);
+            animation: ping-pulse 1.5s infinite ease-out;
         }
     </style>
 </head>
 <body>
 
-    <div id="loader">
-        <div class="spinner"></div>
-        <h2 class="brand-font">MANHUNT RADAR LÄDT...</h2>
-    </div>
-
     <div id="app-container">
 
-        <!-- LOBBY SCREEN -->
+        <!-- LOBBY MAIN SCREEN -->
         <div id="screen-lobby" class="screen">
             <div class="cyber-card">
                 <h1>MANHUNT TACTICAL</h1>
-                <p>Echtzeit Real-Life Tracking Dashboard</p>
+                <div class="subtitle">Echtzeit GPS Multiplayer Dashboard</div>
 
+                <!-- SPIELER SETTINGS -->
                 <div class="input-group">
-                    <label>DEIN CODENAME</label>
-                    <input type="text" id="input-username" placeholder="z.B. Hunter_01" value="Agent_X" maxlength="12">
+                    <label>CODENAME / SPIELERNAME</label>
+                    <input type="text" id="input-username" placeholder="z.B. Hunter_01" value="Agent_X" maxlength="14">
                 </div>
 
                 <div class="input-group">
@@ -303,42 +383,104 @@
                     </select>
                 </div>
 
-                <div class="input-group">
-                    <label>LOBBY CODE</label>
-                    <input type="text" id="input-roomcode" placeholder="z.B. ALPHA1" value="ALPHA1" maxlength="6" style="text-transform: uppercase;">
+                <!-- OFFENE RÄUME BROWSER -->
+                <div class="lobby-list-title">
+                    <span>OFFENE RÄUME IN DER NÄHE</span>
+                    <button onclick="refreshLobbyList()" style="background:none; border:none; color:var(--neon-blue); cursor:pointer; font-weight:bold;">🔄 Aktualisieren</button>
                 </div>
 
-                <div class="btn-grid">
-                    <button class="btn btn-primary" onclick="startLobby('host')">RAUM ERSTELLEN</button>
-                    <button class="btn" onclick="startLobby('join')">BEITRETEN</button>
+                <div class="lobby-container" id="lobby-list-box">
+                    <!-- Dynamisch gefüllte Räume -->
                 </div>
 
-                <button class="btn btn-demo" onclick="startDemoMode()">🎮 DEMO-MODUS (SOLO TEST)</button>
+                <!-- NEUEN RAUM ERSTELLEN -->
+                <button class="btn btn-blue" style="width: 100%; margin-bottom: 8px;" onclick="openCreateRoomModal()">
+                    ➕ NEUEN RAUM ERSTELLEN
+                </button>
+
+                <button class="btn" style="width: 100%; border-color: #555; color: #aaa;" onclick="startDemoMode()">
+                    🎮 SOLO DEMO-MODUS (TEST)
+                </button>
             </div>
         </div>
 
-        <!-- MAIN MAP VIEW -->
+        <!-- RAUM ERSTELLEN MODAL -->
+        <div id="modal-create-room" class="modal-overlay hidden">
+            <div class="cyber-card" style="margin: 0;">
+                <h2 style="color: var(--neon-blue); font-size: 1.2rem; margin-bottom: 12px; text-align:center;">RAUM ERSTELLEN</h2>
+
+                <div class="input-group">
+                    <label>RAUM-NAME</label>
+                    <input type="text" id="input-roomname" placeholder="z.B. Jagd Dresden Nord" value="Jagd Bad Dürkheim">
+                </div>
+
+                <div class="row-2">
+                    <div class="input-group">
+                        <label>STADT / ORT</label>
+                        <input type="text" id="input-city" placeholder="z.B. Dresden" value="Bad Dürkheim">
+                    </div>
+                    <div class="input-group">
+                        <label>BUNDESLAND</label>
+                        <select id="select-state">
+                            <option value="Rheinland-Pfalz">Rheinland-Pfalz</option>
+                            <option value="Sachsen">Sachsen</option>
+                            <option value="Baden-Württemberg">Baden-Württemberg</option>
+                            <option value="Bayern">Bayern</option>
+                            <option value="NRW">Nordrhein-Westfalen</option>
+                            <option value="Hessen">Hessen</option>
+                            <option value="Niedersachsen">Niedersachsen</option>
+                            <option value="Berlin">Berlin</option>
+                            <option value="Hamburg">Hamburg</option>
+                            <option value="Andere">Andere</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="row-2" style="margin-top: 10px;">
+                    <button class="btn btn-danger" onclick="closeCreateRoomModal()">ABBRECHEN</button>
+                    <button class="btn btn-primary" onclick="confirmCreateRoom()">STARTEN</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- MAIN MAP VIEW & TACTICAL HUD -->
         <div id="map-wrapper">
-            <div class="top-bar">
-                <div class="stat-badge">
-                    <span>ROLLE:</span>
-                    <span id="display-role" class="stat-value">JÄGER</span>
+
+            <!-- OBERE BAR (Status) -->
+            <div class="hud-top-bar">
+                <div class="hud-element">
+                    ROLLE: <span id="display-role" class="hud-val">JÄGER</span>
                 </div>
-                <div class="stat-badge">
-                    <span>GPS:</span>
-                    <span id="display-gps" class="stat-value">SUCHE...</span>
+                <div class="hud-element">
+                    RAUM: <span id="display-room" class="hud-val" style="color:var(--neon-blue)">-</span>
                 </div>
-                <button class="layer-btn" id="layer-toggle-btn" onclick="toggleMapLayer()">🗺 SATELLIT</button>
+                <div class="hud-element">
+                    GPS: <span id="display-gps" class="hud-val">SUCHE...</span>
+                </div>
             </div>
 
+            <!-- RECHTE CONTROL BUTTONS -->
+            <div class="hud-right-controls">
+                <div class="hud-btn-square" onclick="toggleMapLayer()" title="Kartentyp wechseln">🗺️</div>
+                <div class="hud-btn-square" onclick="centerOnUser()" title="Auf mich zentrieren">🎯</div>
+                <div class="hud-btn-square" onclick="leaveLobby()" title="Lobby verlassen" style="border-color: var(--neon-red); color: var(--neon-red);">❌</div>
+            </div>
+
+            <!-- KARTE -->
             <div id="map"></div>
 
-            <div class="bottom-panel">
-                <div class="action-row">
+            <!-- UNTERE AKTIONS-PANEL -->
+            <div class="hud-bottom-panel">
+                <div style="display:flex; justify-content: space-between; font-size: 0.75rem; color: #8899a6; padding: 0 2px;">
+                    <span id="display-location">Standort: Unbekannt</span>
+                    <span id="display-players">Spieler: 1 Active</span>
+                </div>
+                <div class="hud-actions-grid">
                     <button class="btn btn-primary" onclick="triggerManualPing()">📡 LIVE-PING SENDEN</button>
-                    <button class="btn btn-danger" onclick="leaveLobby()">❌ LOBBY</button>
+                    <button class="btn btn-danger" onclick="triggerPanic()">⚠️ ALARM</button>
                 </div>
             </div>
+
         </div>
 
     </div>
@@ -349,20 +491,25 @@
     <script>
         let map = null;
         let userMarker = null;
-        let demoHunterMarker = null;
-        let demoZoneCircle = null;
+        let demoBotMarker = null;
+        let activePingCircles = [];
         let currentRole = 'hunter';
-        let userPosition = [52.5200, 13.4050]; // Default Berlin
+        let currentRoom = null;
+        let userPosition = [49.4608, 8.1672]; // Default: Bad Dürkheim
         let currentLayerType = 'sat';
         let tileLayers = {};
 
+        // BEISPIEL RÄUME (Lobby Browser)
+        let publicLobbies = [
+            { id: '1', name: 'Kurpark Jagd', city: 'Bad Dürkheim', state: 'Rheinland-Pfalz', roleCount: '3 Jäger, 1 Gejagter' },
+            { id: '2', name: 'Elbufer Manhunt', city: 'Dresden', state: 'Sachsen', roleCount: '2 Jäger' },
+            { id: '3', name: 'City Zone Alpha', city: 'Stuttgart', state: 'Baden-Württemberg', roleCount: '1 Jäger' }
+        ];
+
         window.addEventListener('load', () => {
-            setTimeout(() => {
-                const loader = document.getElementById('loader');
-                if (loader) loader.style.display = 'none';
-                initMap();
-                initGPS();
-            }, 600);
+            initMap();
+            initGPS();
+            renderLobbyList();
         });
 
         function initMap() {
@@ -370,30 +517,33 @@
                 map = L.map('map', {
                     zoomControl: false,
                     attributionControl: false
-                }).setView(userPosition, 15);
+                }).setView(userPosition, 14);
 
                 tileLayers.sat = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19 });
                 tileLayers.street = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 });
 
                 tileLayers.sat.addTo(map);
-            } catch (err) {
-                console.error("Map Error: ", err);
+            } catch (e) {
+                console.error("Map Initialization Error", e);
             }
         }
 
         function toggleMapLayer() {
             if (!map) return;
-            const btn = document.getElementById('layer-toggle-btn');
             if (currentLayerType === 'sat') {
                 map.removeLayer(tileLayers.sat);
                 tileLayers.street.addTo(map);
                 currentLayerType = 'street';
-                if (btn) btn.innerText = "🗺 STRASSE";
             } else {
                 map.removeLayer(tileLayers.street);
                 tileLayers.sat.addTo(map);
                 currentLayerType = 'sat';
-                if (btn) btn.innerText = "🗺 SATELLIT";
+            }
+        }
+
+        function centerOnUser() {
+            if (map && userPosition) {
+                map.setView(userPosition, 16, { animate: true });
             }
         }
 
@@ -411,25 +561,12 @@
                             gpsDisp.style.color = "#00ff66";
                         }
 
-                        if (map) {
-                            if (!userMarker) {
-                                userMarker = L.circleMarker([lat, lng], {
-                                    radius: 10,
-                                    fillColor: currentRole === 'prey' ? '#00ff66' : '#ff0055',
-                                    color: '#ffffff',
-                                    weight: 3,
-                                    fillOpacity: 0.9
-                                }).addTo(map);
-                                map.setView([lat, lng], 16);
-                            } else {
-                                userMarker.setLatLng([lat, lng]);
-                            }
-                        }
+                        updateUserMarker();
                     },
                     (err) => {
                         const gpsDisp = document.getElementById('display-gps');
                         if (gpsDisp) {
-                            gpsDisp.innerText = "DEMO-GPS";
+                            gpsDisp.innerText = "GPS DEMO";
                             gpsDisp.style.color = "#ffcc00";
                         }
                     },
@@ -438,59 +575,139 @@
             }
         }
 
-        function startLobby(mode) {
-            const name = document.getElementById('input-username').value.trim();
-            const role = document.getElementById('select-role').value;
+        function updateUserMarker() {
+            if (!map) return;
+            if (!userMarker) {
+                userMarker = L.circleMarker(userPosition, {
+                    radius: 10,
+                    fillColor: currentRole === 'prey' ? '#00ff66' : '#ff0055',
+                    color: '#ffffff',
+                    weight: 3,
+                    fillOpacity: 0.9
+                }).addTo(map);
+            } else {
+                userMarker.setLatLng(userPosition);
+                userMarker.setStyle({
+                    fillColor: currentRole === 'prey' ? '#00ff66' : '#ff0055'
+                });
+            }
+        }
 
-            if (!name) return alert("Gib einen Namen ein!");
+        function renderLobbyList() {
+            const box = document.getElementById('lobby-list-box');
+            box.innerHTML = '';
 
-            currentRole = role;
-            const roleDisp = document.getElementById('display-role');
-            if (roleDisp) {
-                roleDisp.innerText = role === 'prey' ? 'GEJAGTER' : 'JÄGER';
-                roleDisp.style.color = role === 'prey' ? '#00ff66' : '#ff0055';
+            if (publicLobbies.length === 0) {
+                box.innerHTML = '<div style="color:#666; font-size:0.85rem; text-align:center; padding:10px;">Keine aktiven Räume gefunden. Erstelle einen neuen!</div>';
+                return;
             }
 
+            publicLobbies.forEach(item => {
+                const el = document.createElement('div');
+                el.className = 'lobby-item';
+                el.innerHTML = `
+                    <div class="lobby-info">
+                        <div class="lobby-name">${item.name}</div>
+                        <div class="lobby-location">📍 ${item.city} (${item.state})</div>
+                        <div class="lobby-badge">${item.roleCount}</div>
+                    </div>
+                    <button class="btn btn-primary" style="padding: 6px 12px; font-size:0.8rem;" onclick="joinRoom('${item.name}', '${item.city}', '${item.state}')">
+                        BEITRETEN
+                    </button>
+                `;
+                box.appendChild(el);
+            });
+        }
+
+        function refreshLobbyList() {
+            renderLobbyList();
+        }
+
+        function openCreateRoomModal() {
+            document.getElementById('modal-create-room').classList.remove('hidden');
+        }
+
+        function closeCreateRoomModal() {
+            document.getElementById('modal-create-room').classList.add('hidden');
+        }
+
+        function confirmCreateRoom() {
+            const roomName = document.getElementById('input-roomname').value.trim();
+            const city = document.getElementById('input-city').value.trim();
+            const state = document.getElementById('select-state').value;
+
+            if (!roomName || !city) {
+                alert("Bitte gib einen Raumnamen und Ort ein!");
+                return;
+            }
+
+            publicLobbies.unshift({
+                id: Date.now().toString(),
+                name: roomName,
+                city: city,
+                state: state,
+                roleCount: '1 Spieler'
+            });
+
+            closeCreateRoomModal();
+            joinRoom(roomName, city, state);
+        }
+
+        function joinRoom(roomName, city, state) {
+            const role = document.getElementById('select-role').value;
+            currentRole = role;
+
+            document.getElementById('display-role').innerText = role === 'prey' ? 'GEJAGTER' : 'JÄGER';
+            document.getElementById('display-role').style.color = role === 'prey' ? '#00ff66' : '#ff0055';
+            document.getElementById('display-room').innerText = roomName;
+            document.getElementById('display-location').innerText = `📍 Ort: ${city} (${state})`;
+
+            updateUserMarker();
             document.getElementById('screen-lobby').classList.add('hidden');
-            setTimeout(() => { if (map) map.invalidateSize(); }, 300);
+
+            setTimeout(() => {
+                if (map) {
+                    map.invalidateSize();
+                    centerOnUser();
+                }
+            }, 300);
         }
 
         function startDemoMode() {
-            startLobby('demo');
-
+            joinRoom("Demo Raum", "Teststadt", "Demo-Land");
             if (map && userPosition) {
-                const demoLat = userPosition[0] + 0.0015;
-                const demoLng = userPosition[1] + 0.0015;
+                const demoLat = userPosition[0] + 0.002;
+                const demoLng = userPosition[1] + 0.002;
 
-                if (!demoHunterMarker) {
-                    demoHunterMarker = L.marker([demoLat, demoLng], { title: "Demo Jäger Bot" }).addTo(map);
-                }
-
-                if (!demoZoneCircle) {
-                    demoZoneCircle = L.circle(userPosition, {
-                        color: '#ff0055',
-                        fillColor: '#ff0055',
-                        fillOpacity: 0.15,
-                        radius: 350
-                    }).addTo(map);
+                if (!demoBotMarker) {
+                    demoBotMarker = L.marker([demoLat, demoLng], { title: "Target" }).addTo(map);
                 }
             }
         }
 
         function leaveLobby() {
             document.getElementById('screen-lobby').classList.remove('hidden');
+            renderLobbyList();
         }
 
         function triggerManualPing() {
             if (map && userPosition) {
-                L.circle(userPosition, {
+                const pingCircle = L.circle(userPosition, {
                     color: '#00e1ff',
                     fillColor: '#00e1ff',
-                    fillOpacity: 0.5,
-                    radius: 50
+                    fillOpacity: 0.3,
+                    radius: 120
                 }).addTo(map);
-                alert(`📡 PING GESENDET!\nPosition: ${userPosition[0].toFixed(4)}, ${userPosition[1].toFixed(4)}`);
+
+                // Animationseffekt entfernen nach 3 Sekunden
+                setTimeout(() => {
+                    map.removeLayer(pingCircle);
+                }, 3000);
             }
+        }
+
+        function triggerPanic() {
+            alert("⚠️ NOTFALL-ALARM: Signal wurde an alle Einheiten gesendet!");
         }
     </script>
 </body>
